@@ -1,0 +1,20 @@
+# Only for config parsing!
+# Supported locales: EN, PT
+locale: EN
+
+# EN
+change:
+  helpCommand:
+    from: '(bukkit:)?help'
+    to: '$1ajuda'
+    regex: true
+    force: false
+
+# If you have changed the Locale to PT
+# PT
+mudar:
+  comandoAjudar:
+    de: '(bukkit:)?help'
+    para: '$1ajuda'
+    expressaoRegular: sim
+    forcar: nao

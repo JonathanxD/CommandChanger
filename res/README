@@ -1,0 +1,13 @@
+This plugin is an command changer. With this API you can change any command label to another,
+change command behavior or cancel command registration. To do that this plugins uses Reflection,
+it may cause 'system breaks' if you try to reload this plugin.
+
+This plugin will force dependency in PluginDescriptionFile of all plugins. If you try to unload
+this plugin, Bukkit will try to unload ALL plugins.
+
+Incompatibility issues: Bukkit doesn't expect command change, some plugins experience some issues.
+If you are a plugin developer you can prevent command label change, see 'CommandChangePrevent',
+but, an developer trying to change your command can register a 'enforcer'.
+
+'@ChangeEnforce' is used to force change of '@ChangePrevent' commands, but, changing that commands
+may break things.

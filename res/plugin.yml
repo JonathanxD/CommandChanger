@@ -1,0 +1,6 @@
+name: BukkitCommandChanger
+version: Alpha
+main: github.therealbuggy.commandchanger.CommandChangerPlugin
+description: Change Bukkit Commands in Register-Time
+author: TheRealBuggy (JonathanxD)
+load: STARTUP
