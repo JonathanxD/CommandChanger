@@ -35,6 +35,7 @@ import github.therealbuggy.commandchanger.util.BukkitUtil;
 import github.therealbuggy.configurator.key.Key;
 import github.therealbuggy.configurator.nav.In;
 import github.therealbuggy.configurator.transformer.TransformedObject;
+import github.therealbuggy.configurator.utils.Require;
 
 public class CommandChangerPlugin extends JavaPlugin implements CommandChangerReload {
 
@@ -109,7 +110,7 @@ public class CommandChangerPlugin extends JavaPlugin implements CommandChangerRe
         File configFile = new File(getDataFolder(), "config.yml");
         changerConfigurator = new CommandChangerConfigurator<>(configFile, this);
 
-        changerConfigurator.getBackend().getData().registerData(new ChangerTemplate());
+        //changerConfigurator.getBackend().getData().registerData(new ChangerTemplate());
 
         changerConfigurator.setKeyAlias(ConfigTags.LANGUAGE, "locale", new ConfigLocaleTranslator(changerConfigurator));
 
@@ -124,9 +125,9 @@ public class CommandChangerPlugin extends JavaPlugin implements CommandChangerRe
             configLocale = key.<ConfigLocale>getValue().getValue();
             if (configLocale == ConfigLocale.PT) {
                 changeKey = "mudar";
-                changerConfigurator.getBackend()
-                        .getData()
-                        .getDataAssignable(ChangerTemplate.class)
+                Require.require(changerConfigurator.getBackend()
+                        .extraData()
+                        .getDataAssignable(ChangerTemplate.class)) // End of Require
                         .getLocaleList()
                         .addLocale(new PortugueseChangerLocale());
                 getLogger().info("Changed language to PT-BR");
@@ -138,14 +139,14 @@ public class CommandChangerPlugin extends JavaPlugin implements CommandChangerRe
     }
 
     public void updateManager() {
-        changerConfigurator.constructSection(configKey, getManager().changers());
+        changerConfigurator.constructSection(configKey, ChangerTransformer.REFERENCE.but().hold(getManager().changers()).build());
     }
 
     private void doDirectivesLoad() {
 
         changerList.forEach(manager::removeChanger);
 
-        Optional<TransformedObject<List<IChanger>>> transformedSectionOpt = changerConfigurator.getTransformedSection(In.path(ConfigTags.CHANGE));
+        Optional<TransformedObject<List<IChanger>>> transformedSectionOpt = changerConfigurator.getTransformedSection(In.path(ConfigTags.CHANGE), ChangerTransformer.REFERENCE);
         if (transformedSectionOpt.isPresent()) {
             TransformedObject<List<IChanger>> changerTransformed = transformedSectionOpt.get();
 

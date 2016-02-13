@@ -22,17 +22,20 @@ import github.therealbuggy.commandchanger.manager.changer.RegexChanger;
 import github.therealbuggy.configurator.IConfigurator;
 import github.therealbuggy.configurator.key.Key;
 import github.therealbuggy.configurator.key.KeyUtil;
-import github.therealbuggy.configurator.locale.ILocale;
 import github.therealbuggy.configurator.locale.LocaleList;
 import github.therealbuggy.configurator.transformer.Transformer;
 import github.therealbuggy.configurator.transformer.exception.TransformException;
 import github.therealbuggy.configurator.types.Type;
 import github.therealbuggy.configurator.types.ValueTypes;
+import github.therealbuggy.configurator.utils.Reference;
+import github.therealbuggy.configurator.utils.Require;
 
 /**
  * Created by jonathan on 10/02/16.
  */
 public class ChangerTransformer implements Transformer<List<IChanger>> {
+
+    public static final Reference REFERENCE = Reference.referenceTo().a(List.class).of(IChanger.class).build();
 
     private final BukkitConfiguratorBackend backend;
 
@@ -49,7 +52,7 @@ public class ChangerTransformer implements Transformer<List<IChanger>> {
 
         List<IChanger> changerList = new ArrayList<>();
 
-        ChangerTemplate changerTemplate = backend.getData().getDataAssignable(ChangerTemplate.class);
+        ChangerTemplate changerTemplate = Require.require(backend.extraData().getDataAssignable(ChangerTemplate.class));
         LocaleList<String, ChangerLocale.Keys> localeList = changerTemplate.getLocaleList();
 
         String path = section.getPath();
@@ -93,6 +96,11 @@ public class ChangerTransformer implements Transformer<List<IChanger>> {
             }
 
             if (id != null && from != null && to != null && isRegex != null && force != null) {
+
+                if (to.contains(" ")) {
+                    System.err.println("BukkitCommandChanger -> Invalid command '"+localeList.translateFromId(ChangerLocale.Keys.TO)+"' input! Command may not work correctly!");
+                }
+
                 if (isRegex)
                     changerList.add(new RegexChanger(id, from, to, force));
                 else
@@ -128,7 +136,7 @@ public class ChangerTransformer implements Transformer<List<IChanger>> {
     @Override
     public void constructSection(Key<?> key, List<IChanger> iChangers, IConfigurator<?> iConfigurator) {
 
-        ChangerTemplate changerTemplate = backend.getData().getDataAssignable(ChangerTemplate.class);
+        ChangerTemplate changerTemplate = Require.require(backend.extraData().getDataAssignable(ChangerTemplate.class));
         LocaleList<String, ChangerLocale.Keys> localeList = changerTemplate.getLocaleList();
 
 
@@ -213,5 +221,11 @@ public class ChangerTransformer implements Transformer<List<IChanger>> {
 
 
         return false;
+    }
+
+    @Override
+    public boolean supports(Reference reference) {
+
+        return ChangerTransformer.REFERENCE.compareTo(reference) == 0;
     }
 }
