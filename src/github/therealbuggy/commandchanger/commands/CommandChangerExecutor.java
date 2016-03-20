@@ -8,15 +8,23 @@ import org.bukkit.command.PluginCommand;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 import github.therealbuggy.commandchanger.CommandChangerPlugin;
 import github.therealbuggy.commandchanger.api.CCommand;
 import github.therealbuggy.commandchanger.api.CommandChangerAPI;
+import github.therealbuggy.commandchanger.manager.CommandChangeManager;
 import github.therealbuggy.commandchanger.manager.changer.DefaultChanger;
 import github.therealbuggy.commandchanger.manager.changer.IChanger;
 import github.therealbuggy.commandchanger.manager.changer.RegexChanger;
+import github.therealbuggy.commandchanger.manager.remover.RegexRemover;
+import github.therealbuggy.commandchanger.manager.remover.Remover;
 
 /**
  * Created by jonathan on 11/02/16.
@@ -50,6 +58,8 @@ public class CommandChangerExecutor implements CommandExecutor {
             listChangedCommands(commandSender, command, label, args);
         } else if (subCmd.equalsIgnoreCase("list-changers")) {
             listChangersCommand(commandSender, command, label, args);
+        } else if (subCmd.equalsIgnoreCase("list-removed")) {
+            listRemovedCommand(commandSender, command, label, args);
         } else if (subCmd.equalsIgnoreCase("locale")) {
             localeCommand(commandSender, command, label, args);
         } else if (subCmd.equalsIgnoreCase("find-command")) {
@@ -58,8 +68,12 @@ public class CommandChangerExecutor implements CommandExecutor {
             commandInfo(commandSender, command, label, args);
         } else if (subCmd.equalsIgnoreCase("change")) {
             changeCommand(commandSender, command, label, args);
-        } else if (subCmd.equalsIgnoreCase("remove")) {
-            removeCommand(commandSender, command, label, args);
+        } else if (subCmd.equalsIgnoreCase("remove-changer")) {
+            removeChangerCommand(commandSender, command, label, args);
+        } else if (subCmd.equalsIgnoreCase("remove-command")) {
+            removeCommandCommand(commandSender, command, label, args);
+        } else if (subCmd.equalsIgnoreCase("remove-remover")) {
+            removeRemoverCommand(commandSender, command, label, args);
         } else {
             view(commandSender, command, label, args);
             return false;
@@ -71,15 +85,18 @@ public class CommandChangerExecutor implements CommandExecutor {
 
     private void view(CommandSender commandSender, Command command, String label, String[] args) {
         commandSender.sendMessage(ChatColor.AQUA + "===" + ChatColor.GREEN + " Commands " + ChatColor.AQUA + "===");
-        commandSender.sendMessage(ChatColor.AQUA + "[] = Required, <> = Optional");
+        commandSender.sendMessage(ChatColor.AQUA + "[] = Required, <> = Optional, ... = List");
         sendMessageTo(commandSender, label, "reload - Restore commands, reload config, setup commands.");
         sendMessageTo(commandSender, label, "list-changed - List changed commands.");
         sendMessageTo(commandSender, label, "list-changers - List config changers.");
+        sendMessageTo(commandSender, label, "list-removed - List removed commands (regex).");
         sendMessageTo(commandSender, label, "locale - View current locale.");
         sendMessageTo(commandSender, label, "find-command [command] <Regex yes/no> - Find a command.");
         sendMessageTo(commandSender, label, "command-info [command] <Regex yes/no> - Show complete command information, including change history.");
         sendMessageTo(commandSender, label, "change [id] [command] [new command] <Regex yes/no> <Force yes/no> - Change 'command' to 'new_command'.");
-        sendMessageTo(commandSender, label, "remove [id] - Remove a config changer.");
+        sendMessageTo(commandSender, label, "remove-changer [id] - Remove a config changer.");
+        sendMessageTo(commandSender, label, "remove-command [id] [regex]... - Remove a command.");
+        sendMessageTo(commandSender, label, "remove-remover [id] - Remove a command 'remover'.");
     }
 
     private void listChangersCommand(CommandSender commandSender, Command command, String label, String[] args) {
@@ -111,6 +128,31 @@ public class CommandChangerExecutor implements CommandExecutor {
 
     }
 
+    private void showRemover(CommandSender commandSender, Remover remover) {
+        String id = remover.getId();
+        Set<String> regexSet = remover.getSource();
+
+        commandSender.sendMessage(ChatColor.AQUA + "=================================");
+        commandSender.sendMessage(ChatColor.GREEN + "ID: " + ChatColor.AQUA + id);
+        commandSender.sendMessage(ChatColor.GRAY + " |-" + ChatColor.GREEN + "Regex List ");
+
+        for (String aRegex : regexSet) {
+            commandSender.sendMessage(ChatColor.GRAY + " | " + ChatColor.AQUA + aRegex);
+        }
+
+        commandSender.sendMessage(ChatColor.AQUA + "=================================");
+
+    }
+
+    private void listRemovedCommand(CommandSender commandSender, Command command, String label, String[] args) {
+        CommandChangeManager manager = commandChangerPlugin.getManager();
+
+        for (Remover remover : manager.removers()) {
+            showRemover(commandSender, remover);
+        }
+    }
+
+
     private void reloadCommand(CommandSender commandSender, Command command, String label, String[] args) {
         commandChangerPlugin.reload(commandSender);
     }
@@ -119,7 +161,7 @@ public class CommandChangerExecutor implements CommandExecutor {
         commandSender.sendMessage(ChatColor.GREEN + "Current locale: " + ChatColor.AQUA + commandChangerPlugin.getConfigLocale());
     }
 
-    private void removeCommand(CommandSender commandSender, Command command, String label, String[] args) {
+    private void removeChangerCommand(CommandSender commandSender, Command command, String label, String[] args) {
 
         if (args.length < 2) {
             commandSender.sendMessage(ChatColor.RED + "Not enough arguments!");
@@ -129,12 +171,76 @@ public class CommandChangerExecutor implements CommandExecutor {
 
         String id = args[1];
 
-        IChanger changer = commandChangerPlugin.getManager().findById(id);
+        IChanger changer = commandChangerPlugin.getManager().findChangerById(id);
 
-        if(changer != null) {
-            commandSender.sendMessage("Removing changer...");
+        if (changer != null) {
+            commandSender.sendMessage(ChatColor.GRAY + "Removing changer...");
             commandChangerPlugin.getManager().removeChanger(changer);
             commandChangerPlugin.updateManager();
+            // TODO
+            commandSender.sendMessage(ChatColor.GREEN + "Removed!");
+        } else {
+            commandSender.sendMessage(ChatColor.RED + "Cannot find command changer '" + id + "'!");
+        }
+    }
+
+    private void removeRemoverCommand(CommandSender commandSender, Command command, String label, String[] args) {
+        if (args.length < 2) {
+            commandSender.sendMessage(ChatColor.RED + "Not enough arguments!");
+            return;
+        }
+
+        String id = args[1];
+
+        Remover remover = commandChangerPlugin.getManager().findRemoverById(id);
+
+        if (remover != null) {
+            commandSender.sendMessage(ChatColor.GRAY + "Removing remover...");
+            commandChangerPlugin.getManager().removeRemover(remover);
+            commandChangerPlugin.updateManager();
+            commandSender.sendMessage(ChatColor.GREEN + "Removed!");
+        } else {
+            commandSender.sendMessage(ChatColor.RED + "Cannot find command remover '" + id + "'!");
+        }
+    }
+
+
+    private void removeCommandCommand(CommandSender commandSender, Command command, String label, String[] args) {
+        if (args.length < 3) {
+            commandSender.sendMessage(ChatColor.RED + "Not enough arguments!");
+            return;
+        }
+
+        String id = args[1];
+        Set<String> regexList = new HashSet<>();
+
+        for (int x = 2; x < args.length; ++x) {
+            String regex = args[x];
+
+            try {
+                Pattern.compile(regex);
+            } catch (PatternSyntaxException ex) {
+                commandSender.sendMessage(ChatColor.RED + "Invalid Regex '" + regex + "' at argument index '" + (args.length + 1) + "'!");
+                return;
+            }
+
+            regexList.add(regex);
+        }
+
+        CommandChangeManager manager = commandChangerPlugin.getManager();
+
+        Optional<Remover> opt = manager.removers().stream().filter(r -> r.getId().equals(id)).findAny();
+
+        if (opt.isPresent()) {
+            commandSender.sendMessage(ChatColor.GRAY + "Adding to existent remover...");
+            opt.get().getSource().addAll(regexList);
+            commandSender.sendMessage(ChatColor.GREEN + "Added!");
+        } else {
+            commandSender.sendMessage(ChatColor.GRAY + "Creating remover...");
+            Remover remover = new RegexRemover(id, regexList);
+            manager.addRemover(remover);
+            commandChangerPlugin.updateManager();
+            commandSender.sendMessage(ChatColor.GREEN + "Created!");
         }
     }
 
@@ -166,18 +272,18 @@ public class CommandChangerExecutor implements CommandExecutor {
 
         IChanger changer;
 
-        if(regex) {
+        if (regex) {
             changer = new RegexChanger(id, cmd, newCmd, force);
-        }else{
+        } else {
             changer = new DefaultChanger(id, cmd, newCmd, force);
         }
 
-        commandSender.sendMessage("Creating changer...");
+        commandSender.sendMessage(ChatColor.GRAY + "Creating changer...");
 
         commandChangerPlugin.getManager().addChanger(changer);
         commandChangerPlugin.updateManager();
 
-        commandSender.sendMessage("Created! See details below");
+        commandSender.sendMessage(ChatColor.GREEN + "Created! See details below");
         showChanger(commandSender, changer);
 
     }

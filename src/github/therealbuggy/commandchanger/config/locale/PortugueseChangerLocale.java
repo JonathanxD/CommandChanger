@@ -59,4 +59,3 @@ public class PortugueseChangerLocale extends ChangerLocale {
 
 
 }
-// DESLIGUEI O FIO DA REDE MEMO

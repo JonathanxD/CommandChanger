@@ -141,6 +141,10 @@ public class BukkitCommandsMap extends HashMap<String, Command> {
 
         CCommand command = cCommands.of(key, value, this.commandChangePrevent);
 
+        if(registerResult.isCancelled()) {
+            return null;
+        }
+
         Objects.requireNonNull(command, "Failed to handle command!");
 
         Command tmp;
@@ -334,9 +338,17 @@ public class BukkitCommandsMap extends HashMap<String, Command> {
 
         }
 
+        cCommands.getCommands().stream()
+                .filter(command -> !commandMap.containsKey(command.getOriginalLabel()))
+                .forEach(command -> {
+                    commandMap.put(command.getOriginalLabel(), command.getOriginalCommand());
+                });
+
         cCommands.removeAll();
         this.clear();
         this.putAll(commandMap);
+
+
     }
 
     public CCommands getCCommands() {

@@ -1,12 +1,10 @@
 package github.therealbuggy.commandchanger.listener;
 
-import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 import github.therealbuggy.commandchanger.api.CCommand;
 import github.therealbuggy.commandchanger.api.event.CommandRegisterEvent;
@@ -28,6 +26,10 @@ public class CommandChangerListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void commandRegisterHandler(CommandRegisterEvent event) {
         CCommand cCommand = event.getCCommand();
+
+        if (manager.isCommandRemoved(cCommand.getLabel())) {
+            event.setCancelled(true);
+        }
 
         if (manager.isCommandChanged(cCommand.getLabel())) {
 

@@ -1,11 +1,11 @@
 package github.therealbuggy.commandchanger.manager;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import github.therealbuggy.commandchanger.manager.changer.IChanger;
+import github.therealbuggy.commandchanger.manager.remover.Remover;
 
 /**
  * Created by jonathan on 10/02/16.
@@ -13,6 +13,8 @@ import github.therealbuggy.commandchanger.manager.changer.IChanger;
 public interface CommandChangeManager {
 
     boolean isCommandChanged(String prefixAndLabel);
+
+    boolean isCommandRemoved(String prefixAndLabel);
 
     String getCommandChanged(String prefixAndLabel);
 
@@ -26,9 +28,19 @@ public interface CommandChangeManager {
 
     void removeChanger(IChanger iChanger);
 
+    void addRemover(Remover remover);
+
+    void removeRemover(Remover remover);
+
+    List<Remover> removers();
+
     List<IChanger> changers();
 
-    IChanger findById(String id);
+    IChanger findChangerById(String id);
 
-    void clear();
+    Remover findRemoverById(String id);
+
+    void clearChangers();
+
+    void clearRemovers();
 }

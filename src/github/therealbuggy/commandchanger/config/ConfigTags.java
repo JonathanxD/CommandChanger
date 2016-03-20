@@ -5,5 +5,6 @@ package github.therealbuggy.commandchanger.config;
  */
 public enum ConfigTags {
     CHANGE,
+    BLOCK,
     LANGUAGE
 }

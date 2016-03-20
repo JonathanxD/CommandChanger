@@ -10,6 +10,10 @@ change:
     regex: true
     force: false
 
+block:
+  helpCommand:
+  - '(bukkit:)?plugins'
+
 # If you have changed the Locale to PT
 # PT
 mudar:
@@ -18,3 +22,7 @@ mudar:
     para: '$1ajuda'
     expressaoRegular: sim
     forcar: nao
+
+bloquear:
+  helpCommand:
+  - 'plugins'

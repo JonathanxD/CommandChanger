@@ -166,39 +166,15 @@ public class ChangerTransformer implements Transformer<List<IChanger>> {
             Type<Boolean> regexType = ValueTypes.BoolType(isRegex);
             Type<Boolean> forceType = ValueTypes.BoolType(force);
 
-            backend.setValueToPath(get(pathToId, fromKey), fromType);
-            backend.setValueToPath(get(pathToId, toKey), toType);
-            backend.setValueToPath(get(pathToId, isRegexKey), regexType);
-            backend.setValueToPath(get(pathToId, forceKey), forceType);
+            backend.setValueToPath(Locals.get(pathToId, fromKey), fromType);
+            backend.setValueToPath(Locals.get(pathToId, toKey), toType);
+            backend.setValueToPath(Locals.get(pathToId, isRegexKey), regexType);
+            backend.setValueToPath(Locals.get(pathToId, forceKey), forceType);
 
         }
 
         backend.save();
 
-        if (iConfigurator instanceof BukkitConfigurator) {
-            BukkitConfigurator bukkitConfigurator = (BukkitConfigurator) iConfigurator;
-            Plugin plugin = bukkitConfigurator.getPlugin();
-
-            bukkitConfigurator.getPlugin().reloadConfig();
-
-            if (plugin instanceof CommandChangerReload) {
-                CommandChangerReload reload = (CommandChangerReload) plugin;
-                reload.doConfigReload();
-            }
-
-
-        }
-
-    }
-
-    private String get(String... strings) {
-        StringJoiner stringJoiner = new StringJoiner(".");
-
-        for (String s : strings) {
-            stringJoiner.add(s);
-        }
-
-        return stringJoiner.toString();
     }
 
     @Override

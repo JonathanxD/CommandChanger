@@ -1,7 +1,6 @@
 package github.therealbuggy.commandchanger.manager;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -12,6 +11,7 @@ import java.util.function.Supplier;
 
 import github.therealbuggy.commandchanger.manager.changer.DefaultChanger;
 import github.therealbuggy.commandchanger.manager.changer.IChanger;
+import github.therealbuggy.commandchanger.manager.remover.Remover;
 
 /**
  * Created by jonathan on 10/02/16.
@@ -19,10 +19,23 @@ import github.therealbuggy.commandchanger.manager.changer.IChanger;
 public class SimpleChangerManager implements CommandChangeManager {
 
     private final Set<IChanger> changers = new HashSet<>();
+    private final Set<Remover> removers = new HashSet<>();
 
     @Override
     public boolean isCommandChanged(String prefixAndLabel) {
         return getCommandChanged(prefixAndLabel) != null;
+    }
+
+    @Override
+    public boolean isCommandRemoved(String prefixAndLabel) {
+
+        for (Remover remover : removers) {
+            if (remover.canRemove(prefixAndLabel)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override
@@ -67,17 +80,42 @@ public class SimpleChangerManager implements CommandChangeManager {
     }
 
     @Override
+    public void addRemover(Remover remover) {
+        removers.add(remover);
+    }
+
+    @Override
+    public void removeRemover(Remover remover) {
+        removers.remove(remover);
+    }
+
+    @Override
+    public List<Remover> removers() {
+        return Collections.unmodifiableList(new ArrayList<>(removers));
+    }
+
+    @Override
     public List<IChanger> changers() {
         return Collections.unmodifiableList(new ArrayList<>(changers));
     }
 
     @Override
-    public IChanger findById(String id) {
+    public IChanger findChangerById(String id) {
         return changers.stream().filter(c -> c.getId().equals(id)).findFirst().orElse(null);
     }
 
     @Override
-    public void clear() {
+    public Remover findRemoverById(String id) {
+        return removers.stream().filter(r -> r.getId().equals(id)).findFirst().orElse(null);
+    }
+
+    @Override
+    public void clearChangers() {
         changers.clear();
+    }
+
+    @Override
+    public void clearRemovers() {
+        removers.clear();
     }
 }
