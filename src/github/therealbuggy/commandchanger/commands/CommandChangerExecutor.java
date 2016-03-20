@@ -177,7 +177,6 @@ public class CommandChangerExecutor implements CommandExecutor {
             commandSender.sendMessage(ChatColor.GRAY + "Removing changer...");
             commandChangerPlugin.getManager().removeChanger(changer);
             commandChangerPlugin.updateManager();
-            // TODO
             commandSender.sendMessage(ChatColor.GREEN + "Removed!");
         } else {
             commandSender.sendMessage(ChatColor.RED + "Cannot find command changer '" + id + "'!");
